@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba
 
  * License: GNU Public License version 3
- * Date: 2014-08-15
+ * Date: 2014-12-11
  */
 'use strict';
 
@@ -201,6 +201,8 @@ angular.module('obiba.form')
       scope: {
         name: '@',
         model: '=',
+        disabled: '=',
+        type: '@',
         label: '@',
         required: '@',
         help: '@'
@@ -211,6 +213,34 @@ angular.module('obiba.form')
           $scope.model = '';
         }
         $scope.form = ctrl;
+      },
+      compile: function(elem, attrs) {
+        if (!attrs.type) { attrs.type = 'text'; }
+      }
+    };
+  }])
+
+  .directive('formTextarea', [function () {
+    return {
+      restrict: 'AE',
+      require: '^form',
+      scope: {
+        name: '@',
+        model: '=',
+        disabled: '=',
+        label: '@',
+        required: '@',
+        help: '@'
+      },
+      templateUrl: 'form/form-textarea-template.tpl.html',
+      link: function ($scope, elem, attr, ctrl) {
+        if (angular.isUndefined($scope.model) || $scope.model === null) {
+          $scope.model = '';
+        }
+        $scope.form = ctrl;
+      },
+      compile: function(elem, attrs) {
+        if (!attrs.type) { attrs.type = 'text'; }
       }
     };
   }])
@@ -255,6 +285,31 @@ angular.module('obiba.form')
         $scope.form = ctrl;
       }
     };
+  }])
+
+  .directive('formCheckboxGroup', [function() {
+    return {
+      restrict: 'A',
+      scope: {
+        labelPrefix: '@',
+        options: '=',
+        selected: '='
+      },
+      template: '<div form-checkbox ng-repeat="item in items" model="item.value" label="{{labelPrefix}}.{{item.name}}">',
+      link: function ($scope) {
+        $scope.items = $scope.options.map(function(n) {
+          if ($scope.selected) {
+            return $scope.selected.indexOf(n) < 0 ? {name: n, value: false} : {name: n, value: true};
+          }
+
+          return {name: n, value: false};
+        });
+
+        $scope.$watch('items', function(items) {
+          $scope.selected = items.filter(function(e) { return e.value; }).map(function(e) {return e.name;});
+        }, true);
+      }
+    };
   }]);;'use strict';
 
 angular.module('ngObiba', [
@@ -263,7 +318,7 @@ angular.module('ngObiba', [
   'obiba.rest',
   'obiba.utils'
 ]);
-;angular.module('templates-main', ['form/form-checkbox-template.tpl.html', 'form/form-input-template.tpl.html', 'form/form-localized-input-template.tpl.html', 'notification/notification-confirm-modal.tpl.html', 'notification/notification-modal.tpl.html']);
+;angular.module('templates-main', ['form/form-checkbox-template.tpl.html', 'form/form-input-template.tpl.html', 'form/form-localized-input-template.tpl.html', 'form/form-textarea-template.tpl.html', 'notification/notification-confirm-modal.tpl.html', 'notification/notification-modal.tpl.html']);
 
 angular.module("form/form-checkbox-template.tpl.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("form/form-checkbox-template.tpl.html",
@@ -304,11 +359,12 @@ angular.module("form/form-input-template.tpl.html", []).run(["$templateCache", f
     "\n" +
     "  <input\n" +
     "      ng-model=\"model\"\n" +
-    "      type=\"text\"\n" +
+    "      type=\"{{type}}\"\n" +
     "      class=\"form-control\"\n" +
     "      id=\"{{name}}\"\n" +
     "      name=\"{{name}}\"\n" +
     "      form-server-error\n" +
+    "      ng-disabled=\"disabled\"\n" +
     "      ng-required=\"required\">\n" +
     "\n" +
     "  <ul class=\"input-error list-unstyled\" ng-show=\"form[name].$dirty && form[name].$invalid\">\n" +
@@ -349,6 +405,35 @@ angular.module("form/form-localized-input-template.tpl.html", []).run(["$templat
     "    <p ng-show=\"help\" class=\"help-block\">{{help | translate}}</p>\n" +
     "\n" +
     "</div>");
+}]);
+
+angular.module("form/form-textarea-template.tpl.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("form/form-textarea-template.tpl.html",
+    "<div class=\"form-group\" ng-class=\"{'has-error': (form[name].$dirty || form.saveAttempted) && form[name].$invalid}\">\n" +
+    "\n" +
+    "  <label for=\"{{name}}\" class=\"control-label\">\n" +
+    "    {{label | translate}}\n" +
+    "    <span ng-show=\"required\">*</span>\n" +
+    "  </label>\n" +
+    "\n" +
+    "  <textarea\n" +
+    "      ng-model=\"model\"\n" +
+    "      class=\"form-control\"\n" +
+    "      id=\"{{name}}\"\n" +
+    "      name=\"{{name}}\"\n" +
+    "      form-server-error\n" +
+    "      ng-disabled=\"disabled\"\n" +
+    "      ng-required=\"required\"></textarea>\n" +
+    "\n" +
+    "  <ul class=\"input-error list-unstyled\" ng-show=\"form[name].$dirty && form[name].$invalid\">\n" +
+    "    <li ng-show=\"form[name].$error.required\" translate>required</li>\n" +
+    "    <li ng-repeat=\"error in form[name].errors\">{{error}}</li>\n" +
+    "  </ul>\n" +
+    "\n" +
+    "  <p ng-show=\"help\" class=\"help-block\">{{help | translate}}</p>\n" +
+    "\n" +
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("notification/notification-confirm-modal.tpl.html", []).run(["$templateCache", function($templateCache) {
