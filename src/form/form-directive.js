@@ -114,6 +114,7 @@ angular.module('obiba.form')
     return {
       restrict: 'A',
       scope: {
+<<<<<<< HEAD
         options: '=',
         model: '='
       },
@@ -134,3 +135,25 @@ angular.module('obiba.form')
       }
     };
   }]);
+=======
+        labelPrefix: '@',
+        options: '=',
+        selected: '='
+      },
+      template: '<div form-checkbox ng-repeat="item in items" model="item.value" label="{{labelPrefix}}.{{item.name}}">',
+      link: function ($scope) {
+        $scope.items = $scope.options.map(function(n) {
+          if ($scope.selected) {
+            return $scope.selected.indexOf(n) < 0 ? {name: n, value: false} : {name: n, value: true};
+          }
+
+          return {name: n, value: false};
+        });
+
+        $scope.$watch('items', function(items) {
+          $scope.selected = items.filter(function(e) { return e.value; }).map(function(e) {return e.name;});
+        }, true);
+      }
+    };
+  }]);
+>>>>>>> upstream/form-directives
